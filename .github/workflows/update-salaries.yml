@@ -1,0 +1,40 @@
+
+name: Update NBA Salaries
+
+on:
+  schedule:
+    - cron: "0 14 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-salaries:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 pandas lxml
+
+      - name: Refresh HoopsHype salaries
+        run: python3 build_static.py --refresh
+
+      - name: Commit updated database
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add players-data.js
+          if ! git diff --cached --quiet; then
+            git commit -m "Automated NBA salary update"
+            git push
+          fi
